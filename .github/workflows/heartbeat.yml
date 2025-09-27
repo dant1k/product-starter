@@ -1,0 +1,61 @@
+name: Heartbeat
+
+on:
+  # Каждый час с 09:00 до 21:00 по Киеву (Kyiv = UTC+3 → 06–18 UTC)
+  schedule:
+    - cron: '0 6-18/1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: heartbeater
+  cancel-in-progress: false
+
+jobs:
+  beat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true   # использовать GITHUB_TOKEN для push
+
+      - name: Configure git author
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Heartbeat update (with random jitter)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # случайная задержка 0–55 минут, чтобы коммиты были в разное время
+          delay=$(( RANDOM % 56 ))
+          echo "Sleeping $delay minutes..."
+          sleep "${delay}m"
+
+          ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          mkdir -p docs/notes tests
+
+          # случайный рабочий апдейт
+          case $((RANDOM % 3)) in
+            0) echo "## Changelog update $ts" >> CHANGELOG.md; file="CHANGELOG.md" ;;
+            1) echo "- [ ] Task noted at $ts" >> TODO.md;        file="TODO.md" ;;
+            2) note="docs/notes/notes-$(date -u +%Y-%m-%d).md"; echo "Note at $ts" >> "$note"; file="$note" ;;
+          esac
+
+          # heartbeat — всегда
+          echo "Last update: $ts" > docs/HEARTBEAT.md
+          echo "last: $ts" > tests/smoke.touch.txt
+
+          git add "$file" docs/HEARTBEAT.md tests/smoke.touch.txt
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: auto-update ($file) $ts"
+          git push
