@@ -3,7 +3,9 @@ name: Heartbeat
 on:
   # Каждый час с 09:00 до 21:00 по Киеву (Kyiv = UTC+3 → 06–18 UTC)
   schedule:
-    - cron: '0 6-18/1 * * *'
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
   workflow_dispatch:
 
 permissions:
