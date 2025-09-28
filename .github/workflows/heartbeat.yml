@@ -2,12 +2,12 @@ name: Heartbeat
 
 on:
   schedule:
-    - cron: '0 7 * * *'   # каждый день в 10:00 по Киеву (UTC+3)
+    - cron: '0 7 * * *'   # 10:00 по Киеву
   workflow_dispatch:       # ← добавили ручной запуск
-
 
 permissions:
   contents: write
+
 
 concurrency:
   group: heartbeater
