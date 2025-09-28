@@ -3,11 +3,10 @@ name: Heartbeat
 on:
   schedule:
     - cron: '0 7 * * *'   # 10:00 по Киеву
-  workflow_dispatch:       # ← добавили ручной запуск
+  workflow_dispatch:       # ручной запуск
 
 permissions:
   contents: write
-
 
 concurrency:
   group: heartbeater
@@ -22,45 +21,20 @@ jobs:
         with:
           persist-credentials: true   # использовать GITHUB_TOKEN для push
 
-       - name: Commit & Push
-     run: |
-       git config user.name "dant1k"
-       git config user.email "98425972+dant1k@users.noreply.github.com"
-       ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-       git add .
-       git commit -m "ci: heartbeat $ts" || echo "no changes"
-       git push
-
+      - name: Commit & Push
+        run: |
+          git config user.name "dant1k"
+          git config user.email "98425972+dant1k@users.noreply.github.com"
+          ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          git add .
+          git commit -m "ci: heartbeat $ts" || echo "no changes"
+          git push
 
       - name: Heartbeat update (with random jitter)
         shell: bash
         run: |
           set -euo pipefail
-
-          # случайная задержка 0–55 минут, чтобы коммиты были в разное время
-          delay=$(( RANDOM % 56 ))
-          echo "Sleeping $delay minutes..."
+          delay=$(( RANDOM % 55 ))
+          echo "⏳ wait $delay min..."
           sleep "${delay}m"
 
-          ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          mkdir -p docs/notes tests
-
-          # случайный рабочий апдейт
-          case $((RANDOM % 3)) in
-            0) echo "## Changelog update $ts" >> CHANGELOG.md; file="CHANGELOG.md" ;;
-            1) echo "- [ ] Task noted at $ts" >> TODO.md;        file="TODO.md" ;;
-            2) note="docs/notes/notes-$(date -u +%Y-%m-%d).md"; echo "Note at $ts" >> "$note"; file="$note" ;;
-          esac
-
-          # heartbeat — всегда
-          echo "Last update: $ts" > docs/HEARTBEAT.md
-          echo "last: $ts" > tests/smoke.touch.txt
-
-          git add "$file" docs/HEARTBEAT.md tests/smoke.touch.txt
-          if git diff --cached --quiet; then
-            echo "Nothing to commit."
-            exit 0
-          fi
-
-          git commit -m "chore: auto-update ($file) $ts"
-          git push
