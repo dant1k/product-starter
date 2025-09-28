@@ -22,10 +22,15 @@ jobs:
         with:
           persist-credentials: true   # использовать GITHUB_TOKEN для push
 
-      - name: Configure git author
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+       - name: Commit & Push
+     run: |
+       git config user.name "dant1k"
+       git config user.email "98425972+dant1k@users.noreply.github.com"
+       ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+       git add .
+       git commit -m "ci: heartbeat $ts" || echo "no changes"
+       git push
+
 
       - name: Heartbeat update (with random jitter)
         shell: bash
