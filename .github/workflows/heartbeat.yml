@@ -26,15 +26,11 @@ jobs:
           git config user.name "dant1k"
           git config user.email "98425972+dant1k@users.noreply.github.com"
           ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          git add .
+
+          # создаём/обновляем heartbeat.md, чтобы всегда были изменения
+          echo "last run at $ts" > heartbeat.md
+
+          git add heartbeat.md
           git commit -m "ci: heartbeat $ts" || echo "no changes"
           git push
-
-      - name: Heartbeat update (with random jitter)
-        shell: bash
-        run: |
-          set -euo pipefail
-          delay=$(( RANDOM % 55 ))
-          echo "⏳ wait $delay min..."
-          sleep "${delay}m"
 
